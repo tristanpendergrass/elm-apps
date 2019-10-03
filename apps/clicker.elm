@@ -15,7 +15,6 @@ main =
 
 
 -- MODEL
--- lines of code
 
 
 type alias Loc =
@@ -31,16 +30,16 @@ type alias Cash =
 
 
 type alias Model =
-    { loc : Loc
-    , programmers : Int
-    , time : Time.Posix
-    , cash : Cash
+    { time : Time.Posix -- time of last tick we updated the model
+    , loc : Loc -- lines of code
+    , programmers : Int -- programmers to write the code
+    , cash : Cash -- cash to hire more programmers
     }
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model 0 0 (Time.millisToPosix 0) 20, Cmd.none )
+    ( Model (Time.millisToPosix 0) 0 0 20, Cmd.none )
 
 
 
@@ -88,7 +87,7 @@ update msg model =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
+subscriptions _ =
     Time.every 50 Tick
 
 
@@ -102,11 +101,21 @@ zone =
 
 
 view : Model -> Html Msg
-view model =
+view { cash, loc, programmers } =
+    let
+        cashString =
+            String.fromInt cash
+
+        locString =
+            String.fromInt (floor loc)
+
+        programmersString =
+            String.fromInt programmers
+    in
     div []
-        [ div [] [ text ("Cash on hand: " ++ String.fromInt model.cash) ]
-        , div [] [ text (String.fromInt (floor model.loc) ++ " lines of code written") ]
+        [ div [] [ text ("Cash on hand: " ++ cashString) ]
+        , div [] [ text (locString ++ " lines of code written") ]
         , button [ onClick IncrementLoc ] [ text "Type" ]
-        , div [] [ text (String.fromInt model.programmers ++ " programmers") ]
-        , button [ onClick IncrementProgrammers, disabled (model.cash < 5) ] [ text "Hire programmer" ]
+        , div [] [ text (programmersString ++ " programmers") ]
+        , button [ onClick IncrementProgrammers, disabled (cash < 5) ] [ text "Hire programmer" ]
         ]
