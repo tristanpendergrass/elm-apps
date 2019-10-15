@@ -1,8 +1,10 @@
 module Main exposing (Model, Msg(..), init, main, update, view)
 
+import Array exposing (Array, fromList)
 import Browser
-import Html exposing (Html, button, div, h1, text)
+import Html exposing (Html, button, div, h1, li, text, ul)
 import Html.Events exposing (onClick)
+import Random
 
 
 main =
@@ -24,13 +26,14 @@ type Card
 
 
 type alias Model =
-    { deck : List Card
+    { deck : Array Card
+    , discard : Array Card
     }
 
 
 init : () -> ( Model, Cmd none )
 init _ =
-    ( { deck = [] }, Cmd.none )
+    ( { deck = fromList [ Zero, One, MinusOne, Two, MinusTwo, Crit, Null ], discard = Array.empty }, Cmd.none )
 
 
 
@@ -39,13 +42,33 @@ init _ =
 
 type Msg
     = Draw
+    | HandleDrawResult Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Draw ->
-            ( { deck = Zero :: model.deck }, Cmd.none )
+            ( model
+            , Random.generate HandleDrawResult (Random.int 0 (Array.length model.deck))
+            )
+
+        HandleDrawResult result ->
+            let
+                drawnCard : Maybe Card
+                drawnCard =
+                    Array.get result model.deck
+
+                newDiscard : Array Card
+                newDiscard =
+                    case drawnCard of
+                        Just card ->
+                            Array.push card model.discard
+
+                        Nothing ->
+                            model.discard
+            in
+            ( { model | discard = newDiscard }, Cmd.none )
 
 
 
@@ -61,9 +84,37 @@ subscriptions _ =
 -- VIEW
 
 
+cardRow : Card -> Html msg
+cardRow card =
+    case card of
+        Zero ->
+            li [] [ text "Zero" ]
+
+        One ->
+            li [] [ text "One" ]
+
+        MinusOne ->
+            li [] [ text "MinusOne" ]
+
+        Two ->
+            li [] [ text "Two" ]
+
+        MinusTwo ->
+            li [] [ text "MinusTwo" ]
+
+        Crit ->
+            li [] [ text "Crit" ]
+
+        Null ->
+            li [] [ text "Null" ]
+
+
 view : Model -> Html Msg
 view model =
     div []
         [ button [ onClick Draw ] [ text "Draw" ]
+        , div [] [ text "Deck:" ]
+        , ul [] (Array.toList (Array.map cardRow model.deck))
         , div [] [ text "Drawn cards:" ]
+        , ul [] (Array.toList (Array.map cardRow model.discard))
         ]
