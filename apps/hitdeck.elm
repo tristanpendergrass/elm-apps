@@ -42,7 +42,7 @@ init _ =
 
 type Msg
     = Draw
-    | HandleDrawResult Card
+    | HandleDrawResult Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -50,23 +50,25 @@ update msg model =
     case msg of
         Draw ->
             ( model
-            , Random.generate HandleDrawResult generateCard
+            , Random.generate HandleDrawResult (Random.int 0 (Array.length model.deck))
             )
 
         HandleDrawResult result ->
-            ( { model | discard = Array.push result model.discard }, Cmd.none )
+            let
+                drawnCard : Maybe Card
+                drawnCard =
+                    Array.get result model.deck
 
+                newDiscard : Array Card
+                newDiscard =
+                    case drawnCard of
+                        Just card ->
+                            Array.push card model.discard
 
-generateCard : Random.Generator Card
-generateCard =
-    Random.uniform Zero
-        [ One
-        , MinusOne
-        , Two
-        , MinusTwo
-        , Crit
-        , Null
-        ]
+                        Nothing ->
+                            model.discard
+            in
+            ( { model | discard = newDiscard }, Cmd.none )
 
 
 
