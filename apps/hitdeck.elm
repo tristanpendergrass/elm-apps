@@ -67,8 +67,21 @@ update msg model =
 
                         Nothing ->
                             model.discard
+
+                isDrawnCard : Card -> Card -> Bool
+                isDrawnCard left right =
+                    left == right
+
+                newDeck : Array Card
+                newDeck =
+                    case drawnCard of
+                        Just card ->
+                            Array.filter ((/=) card) model.deck
+
+                        Nothing ->
+                            model.deck
             in
-            ( { model | discard = newDiscard }, Cmd.none )
+            ( { model | discard = newDiscard, deck = newDeck }, Cmd.none )
 
 
 
