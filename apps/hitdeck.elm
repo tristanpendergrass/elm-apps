@@ -50,7 +50,7 @@ update msg model =
     case msg of
         Draw ->
             ( model
-            , Random.generate HandleDrawResult (Random.int 0 (Array.length model.deck))
+            , Random.generate HandleDrawResult (Random.int 0 (Array.length model.deck - 1))
             )
 
         HandleDrawResult result ->
