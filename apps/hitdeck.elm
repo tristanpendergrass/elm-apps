@@ -15,7 +15,7 @@ main =
 -- MODEL
 
 
-type Card
+type CardType
     = Zero
     | One
     | MinusOne
@@ -25,15 +25,38 @@ type Card
     | Null
 
 
+type alias CardId =
+    Int
+
+
+type alias Card =
+    { id : CardId, cardType : CardType }
+
+
 type alias Model =
     { deck : Array Card
     , discard : Array Card
+    , nonce : Int -- Number to be used for card ids
     }
 
 
 init : () -> ( Model, Cmd none )
 init _ =
-    ( { deck = fromList [ Zero, One, MinusOne, Two, MinusTwo, Crit, Null ], discard = Array.empty }, Cmd.none )
+    ( { deck =
+            fromList
+                [ { id = 0, cardType = Zero }
+                , { id = 1, cardType = One }
+                , { id = 2, cardType = MinusOne }
+                , { id = 3, cardType = Two }
+                , { id = 4, cardType = MinusTwo }
+                , { id = 5, cardType = Crit }
+                , { id = 6, cardType = Null }
+                ]
+      , discard = Array.empty
+      , nonce = 7
+      }
+    , Cmd.none
+    )
 
 
 
@@ -99,7 +122,7 @@ subscriptions _ =
 
 cardRow : Card -> Html Msg
 cardRow card =
-    case card of
+    case card.cardType of
         Zero ->
             li [] [ text "Zero" ]
 
