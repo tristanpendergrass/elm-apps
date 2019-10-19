@@ -97,7 +97,7 @@ subscriptions _ =
 -- VIEW
 
 
-cardRow : Card -> Html msg
+cardRow : Card -> Html Msg
 cardRow card =
     case card of
         Zero ->
