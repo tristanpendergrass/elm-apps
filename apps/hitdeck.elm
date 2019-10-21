@@ -15,6 +15,10 @@ main =
 -- MODEL
 
 
+type alias Id =
+    Int
+
+
 type CardType
     = Zero
     | One
@@ -25,35 +29,57 @@ type CardType
     | Null
 
 
-type alias CardId =
-    Int
+type alias CardData =
+    { cardType : CardType }
 
 
 type alias Card =
-    { id : CardId, cardType : CardType }
+    ( Id, CardData )
+
+
+type alias PileData =
+    { cards : List Card }
+
+
+type alias Pile =
+    ( Id, PileData )
+
+
+type alias MatData =
+    { deck : Pile, discard : Pile }
+
+
+type alias Mat =
+    ( Id, MatData )
 
 
 type alias Model =
-    { deck : Array Card
-    , discard : Array Card
-    , nonce : Int -- Number to be used for card ids
+    { mats : List Mat
+    , nonce : Int -- Number to be used and then incremented when assigning new ids
+    }
+
+
+defaultDeck : PileData
+defaultDeck =
+    { cards = [] }
+
+
+defaultDiscard : PileData
+defaultDiscard =
+    { cards = [] }
+
+
+defaultMat : MatData
+defaultMat =
+    { deck = ( 1, defaultDeck )
+    , discard = ( 2, defaultDiscard )
     }
 
 
 init : () -> ( Model, Cmd none )
 init _ =
-    ( { deck =
-            fromList
-                [ { id = 0, cardType = Zero }
-                , { id = 1, cardType = One }
-                , { id = 2, cardType = MinusOne }
-                , { id = 3, cardType = Two }
-                , { id = 4, cardType = MinusTwo }
-                , { id = 5, cardType = Crit }
-                , { id = 6, cardType = Null }
-                ]
-      , discard = Array.empty
-      , nonce = 7
+    ( { mats = [ ( 0, defaultMat ) ]
+      , nonce = 0
       }
     , Cmd.none
     )
@@ -64,19 +90,24 @@ init _ =
 
 
 type Msg
-    = Draw
-    | HandleDrawResult Int
+    = Draw Mat
+    | HandleDrawResult Mat Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Draw ->
+        Draw mat ->
+            let
+                deckData : PileData
+                deckData =
+                    Tuple.second (Tuple.second mat).deck
+            in
             ( model
-            , Random.generate HandleDrawResult (Random.int 0 (Array.length model.deck - 1))
+            , Random.generate (HandleDrawResult mat) (Random.int 0 (List.length deckData.cards - 1))
             )
 
-        HandleDrawResult result ->
+        HandleDrawResult mat result ->
             let
                 drawnCard : Maybe Card
                 drawnCard =
