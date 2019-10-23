@@ -29,28 +29,16 @@ type CardType
     | Null
 
 
-type alias CardData =
-    { cardType : CardType }
-
-
 type alias Card =
-    ( Id, CardData )
-
-
-type alias PileData =
-    { cards : List Card }
+    { id : Id, cardType : CardType }
 
 
 type alias Pile =
-    ( Id, PileData )
-
-
-type alias MatData =
-    { deck : Pile, discard : Pile }
+    { id : Id, cards : List Card }
 
 
 type alias Mat =
-    ( Id, MatData )
+    { id : Id, deck : Pile, discard : Pile }
 
 
 type alias Model =
@@ -59,26 +47,27 @@ type alias Model =
     }
 
 
-defaultDeck : PileData
+defaultDeck : Pile
 defaultDeck =
-    { cards = [] }
+    { id = 0, cards = [] }
 
 
-defaultDiscard : PileData
+defaultDiscard : Pile
 defaultDiscard =
-    { cards = [] }
+    { id = 1, cards = [] }
 
 
-defaultMat : MatData
+defaultMat : Mat
 defaultMat =
-    { deck = ( 1, defaultDeck )
-    , discard = ( 2, defaultDiscard )
+    { id = 2
+    , deck = defaultDeck
+    , discard = defaultDiscard
     }
 
 
 init : () -> ( Model, Cmd none )
 init _ =
-    ( { mats = [ ( 0, defaultMat ) ]
+    ( { mats = [ defaultMat ]
       , nonce = 0
       }
     , Cmd.none
@@ -98,44 +87,49 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Draw mat ->
-            let
-                deckData : PileData
-                deckData =
-                    Tuple.second (Tuple.second mat).deck
-            in
             ( model
-            , Random.generate (HandleDrawResult mat) (Random.int 0 (List.length deckData.cards - 1))
+            , Random.generate (HandleDrawResult mat) (Random.int 0 (List.length mat.deck.cards - 1))
             )
 
         HandleDrawResult mat result ->
             let
+                cards : List Card
+                cards =
+                    mat.deck.cards
+
                 drawnCard : Maybe Card
                 drawnCard =
-                    Array.get result model.deck
+                    Array.get result (Array.fromList cards)
 
-                newDiscard : Array Card
+                newDiscard : Pile
                 newDiscard =
+                    let
+                        discard : Pile
+                        discard =
+                            mat.discard
+                    in
                     case drawnCard of
                         Just card ->
-                            Array.push card model.discard
+                            { discard | cards = card :: discard.cards }
 
                         Nothing ->
-                            model.discard
+                            mat.discard
 
-                isDrawnCard : Card -> Card -> Bool
-                isDrawnCard left right =
-                    left == right
-
-                newDeck : Array Card
+                newDeck : Pile
                 newDeck =
+                    let
+                        deck : Pile
+                        deck =
+                            mat.deck
+                    in
                     case drawnCard of
                         Just card ->
-                            Array.filter ((/=) card) model.deck
+                            { deck | cards = List.filter ((/=) card) cards }
 
                         Nothing ->
-                            model.deck
+                            mat.deck
             in
-            ( { model | discard = newDiscard, deck = newDeck }, Cmd.none )
+            ( { model | mats = [ Mat 2 newDeck newDiscard ] }, Cmd.none )
 
 
 
@@ -178,10 +172,19 @@ cardRow card =
 
 view : Model -> Html Msg
 view model =
+    let
+        ( deck, discard ) =
+            case List.head model.mats of
+                Just mat ->
+                    ( mat.deck, mat.discard )
+
+                Nothing ->
+                    ( Pile 5 [], Pile 6 [] )
+    in
     div []
         [ button [ onClick Draw ] [ text "Draw" ]
         , div [] [ text "Deck:" ]
-        , ul [] (Array.toList (Array.map cardRow model.deck))
+        , ul [] (List.map cardRow deck)
         , div [] [ text "Drawn cards:" ]
         , ul [] (Array.toList (Array.map cardRow model.discard))
         ]
