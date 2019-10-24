@@ -47,27 +47,47 @@ type alias Model =
     }
 
 
-defaultDeck : Pile
-defaultDeck =
-    { id = 0, cards = [] }
-
-
-defaultDiscard : Pile
-defaultDiscard =
-    { id = 1, cards = [] }
-
-
 defaultMat : Mat
 defaultMat =
     { id = 2
-    , deck = defaultDeck
-    , discard = defaultDiscard
+    , deck =
+        { id = 10
+        , cards =
+            [ { id = 11, cardType = Zero }
+            , { id = 12, cardType = One }
+            , { id = 13, cardType = MinusOne }
+            , { id = 14, cardType = Two }
+            , { id = 15, cardType = MinusTwo }
+            , { id = 16, cardType = Crit }
+            , { id = 17, cardType = Null }
+            ]
+        }
+    , discard = { id = 20, cards = [] }
+    }
+
+
+defaultMatTwo : Mat
+defaultMatTwo =
+    { id = 3
+    , deck =
+        { id = 30
+        , cards =
+            [ { id = 31, cardType = Zero }
+            , { id = 32, cardType = One }
+            , { id = 33, cardType = MinusOne }
+            , { id = 34, cardType = Two }
+            , { id = 35, cardType = MinusTwo }
+            , { id = 36, cardType = Crit }
+            , { id = 37, cardType = Null }
+            ]
+        }
+    , discard = { id = 40, cards = [] }
     }
 
 
 init : () -> ( Model, Cmd none )
 init _ =
-    ( { mats = [ defaultMat ]
+    ( { mats = [ defaultMat, defaultMatTwo ]
       , nonce = 0
       }
     , Cmd.none
@@ -128,8 +148,24 @@ update msg model =
 
                         Nothing ->
                             mat.deck
+
+                newMat : Mat
+                newMat =
+                    { mat | deck = newDeck, discard = newDiscard }
+
+                newMats : List Mat
+                newMats =
+                    List.map
+                        (\l ->
+                            if l == mat then
+                                newMat
+
+                            else
+                                l
+                        )
+                        model.mats
             in
-            ( { model | mats = [ Mat 2 newDeck newDiscard ] }, Cmd.none )
+            ( { model | mats = newMats }, Cmd.none )
 
 
 
@@ -170,21 +206,18 @@ cardRow card =
             li [] [ text "Null" ]
 
 
+renderMat : Mat -> Html Msg
+renderMat mat =
+    div []
+        [ button [ onClick (Draw mat) ] [ text "Draw" ]
+        , div [] [ text "Deck:" ]
+        , ul [] (List.map cardRow mat.deck.cards)
+        , div [] [ text "Drawn cards:" ]
+        , ul [] (List.map cardRow mat.discard.cards)
+        ]
+
+
 view : Model -> Html Msg
 view model =
-    let
-        ( deck, discard ) =
-            case List.head model.mats of
-                Just mat ->
-                    ( mat.deck, mat.discard )
-
-                Nothing ->
-                    ( Pile 5 [], Pile 6 [] )
-    in
     div []
-        [ button [ onClick Draw ] [ text "Draw" ]
-        , div [] [ text "Deck:" ]
-        , ul [] (List.map cardRow deck)
-        , div [] [ text "Drawn cards:" ]
-        , ul [] (Array.toList (Array.map cardRow model.discard))
-        ]
+        (List.map renderMat model.mats)
