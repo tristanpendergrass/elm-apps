@@ -5,6 +5,7 @@ import Browser
 import Html exposing (Html, button, div, h1, li, text, ul)
 import Html.Events exposing (onClick)
 import Random
+import Random.List exposing (shuffle)
 
 
 main =
@@ -99,13 +100,54 @@ init _ =
 
 
 type Msg
-    = Draw Mat
+    = Reshuffle Mat
+    | HandleReshuffleResult Mat (List Card)
+    | Draw Mat
     | HandleDrawResult Mat Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        Reshuffle mat ->
+            ( model, Random.generate (HandleReshuffleResult mat) (shuffle (List.concat [ mat.deck.cards, mat.discard.cards ])) )
+
+        HandleReshuffleResult mat shuffledCards ->
+            let
+                oldDeck : Pile
+                oldDeck =
+                    mat.deck
+
+                newDeck : Pile
+                newDeck =
+                    { oldDeck | cards = shuffledCards }
+
+                oldDiscard : Pile
+                oldDiscard =
+                    mat.discard
+
+                newDiscard : Pile
+                newDiscard =
+                    { oldDiscard | cards = [] }
+
+                newMat : Mat
+                newMat =
+                    { mat | deck = newDeck, discard = newDiscard }
+
+                newMats : List Mat
+                newMats =
+                    List.map
+                        (\m ->
+                            if m == mat then
+                                newMat
+
+                            else
+                                m
+                        )
+                        model.mats
+            in
+            ( { model | mats = newMats }, Cmd.none )
+
         Draw mat ->
             ( model
             , Random.generate (HandleDrawResult mat) (Random.int 0 (List.length mat.deck.cards - 1))
@@ -209,7 +251,7 @@ cardRow card =
 renderMat : Mat -> Html Msg
 renderMat mat =
     div []
-        [ button [ onClick (Draw mat) ] [ text "Draw" ]
+        [ div [] [ button [ onClick (Draw mat) ] [ text "Draw" ], button [ onClick (Reshuffle mat) ] [ text "Reshuffle" ] ]
         , div [] [ text "Deck:" ]
         , ul [] (List.map cardRow mat.deck.cards)
         , div [] [ text "Drawn cards:" ]
