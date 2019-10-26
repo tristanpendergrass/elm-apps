@@ -2,7 +2,7 @@ module Main exposing (Model, Msg(..), init, main, update, view)
 
 import Array exposing (Array, fromList)
 import Browser
-import Html exposing (Html, button, div, h1, li, text, ul)
+import Html exposing (Html, button, div, h1, hr, li, text, ul)
 import Html.Events exposing (onClick)
 import Random
 import Random.List exposing (shuffle)
@@ -61,6 +61,7 @@ defaultMat =
             , { id = 15, cardType = MinusTwo }
             , { id = 16, cardType = Crit }
             , { id = 17, cardType = Null }
+            , { id = 18, cardType = Zero }
             ]
         }
     , discard = { id = 20, cards = [] }
@@ -80,6 +81,7 @@ defaultMatTwo =
             , { id = 35, cardType = MinusTwo }
             , { id = 36, cardType = Crit }
             , { id = 37, cardType = Null }
+            , { id = 38, cardType = Zero }
             ]
         }
     , discard = { id = 40, cards = [] }
@@ -89,7 +91,7 @@ defaultMatTwo =
 init : () -> ( Model, Cmd none )
 init _ =
     ( { mats = [ defaultMat, defaultMatTwo ]
-      , nonce = 0
+      , nonce = 41
       }
     , Cmd.none
     )
@@ -256,6 +258,7 @@ renderMat mat =
         , ul [] (List.map cardRow mat.deck.cards)
         , div [] [ text "Drawn cards:" ]
         , ul [] (List.map cardRow mat.discard.cards)
+        , hr [] []
         ]
 
 
