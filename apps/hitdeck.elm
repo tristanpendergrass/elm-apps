@@ -159,59 +159,48 @@ update msg model =
             ( { model | mats = newMats }, Cmd.none )
 
         Draw mat ->
-            let
-                ( drawnCard, newSeed ) =
-                    case mat.deck.cards of
-                        first :: rest ->
-                            Random.step (Random.uniform first rest) model.seed
-                                |> Tuple.mapFirst Just
+            case mat.deck.cards of
+                [] ->
+                    ( model, Cmd.none )
 
-                        [] ->
-                            ( Nothing, model.seed )
+                firstCard :: restOfCards ->
+                    let
+                        ( drawnCard, newSeed ) =
+                            Random.step (Random.uniform firstCard restOfCards) model.seed
 
-                oldDiscard : Pile
-                oldDiscard =
-                    mat.discard
-
-                newDiscard : Pile
-                newDiscard =
-                    case drawnCard of
-                        Just card ->
-                            { oldDiscard | cards = card :: oldDiscard.cards }
-
-                        Nothing ->
+                        oldDiscard : Pile
+                        oldDiscard =
                             mat.discard
 
-                oldDeck : Pile
-                oldDeck =
-                    mat.deck
+                        newDiscard : Pile
+                        newDiscard =
+                            { oldDiscard | cards = drawnCard :: oldDiscard.cards }
 
-                newDeck : Pile
-                newDeck =
-                    case drawnCard of
-                        Just card ->
-                            { oldDeck | cards = List.filter ((/=) card) oldDeck.cards }
-
-                        Nothing ->
+                        oldDeck : Pile
+                        oldDeck =
                             mat.deck
 
-                newMat : Mat
-                newMat =
-                    { mat | deck = newDeck, discard = newDiscard }
+                        newDeck : Pile
+                        newDeck =
+                            { oldDeck | cards = List.filter ((/=) drawnCard) oldDeck.cards }
 
-                newMats : List Mat
-                newMats =
-                    List.map
-                        (\l ->
-                            if l == mat then
-                                newMat
+                        newMat : Mat
+                        newMat =
+                            { mat | deck = newDeck, discard = newDiscard }
 
-                            else
-                                l
-                        )
-                        model.mats
-            in
-            ( { model | mats = newMats, seed = newSeed }, Cmd.none )
+                        newMats : List Mat
+                        newMats =
+                            List.map
+                                (\l ->
+                                    if l == mat then
+                                        newMat
+
+                                    else
+                                        l
+                                )
+                                model.mats
+                    in
+                    ( { model | mats = newMats, seed = newSeed }, Cmd.none )
 
 
 
