@@ -54,8 +54,13 @@ type alias Pile =
     { id : Id, cards : List Card }
 
 
+type EditState
+    = Default
+    | Editing
+
+
 type alias Mat =
-    { id : Id, deck : Pile, discard : Pile }
+    { id : Id, deck : Pile, discard : Pile, editState : EditState }
 
 
 type alias Model =
@@ -82,6 +87,7 @@ defaultMat =
             ]
         }
     , discard = { id = 20, cards = [] }
+    , editState = Default
     }
 
 
@@ -102,6 +108,7 @@ defaultMatTwo =
             ]
         }
     , discard = { id = 40, cards = [] }
+    , editState = Default
     }
 
 
@@ -125,6 +132,7 @@ type Msg
     | Draw Mat
     | AddCard Mat CardType
     | RemoveCard Pile Mat Card
+    | ToggleMatEdit Mat
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -240,6 +248,25 @@ update msg model =
             in
             ( { model | mats = newMats }, Cmd.none )
 
+        ToggleMatEdit mat ->
+            let
+                newMat : Mat
+                newMat =
+                    { mat
+                        | editState =
+                            if mat.editState == Default then
+                                Editing
+
+                            else
+                                Default
+                    }
+
+                newMats : List Mat
+                newMats =
+                    replace mat newMat model.mats
+            in
+            ( { model | mats = newMats }, Cmd.none )
+
 
 
 -- SUBSCRIPTIONS
@@ -254,35 +281,37 @@ subscriptions _ =
 -- VIEW
 
 
-cardRow : Pile -> Mat -> Card -> Html Msg
-cardRow deck mat card =
+cardRow : Mat -> Card -> Html Msg
+cardRow mat card =
     case card.cardType of
         Zero ->
-            li [] [ button [ onClick (RemoveCard deck mat card) ] [ text "-" ], text "Zero" ]
+            li [] [ button [ onClick (RemoveCard mat.deck mat card) ] [ text "-" ], text "Zero" ]
 
         One ->
-            li [] [ button [ onClick (RemoveCard deck mat card) ] [ text "-" ], text "One" ]
+            li [] [ button [ onClick (RemoveCard mat.deck mat card) ] [ text "-" ], text "One" ]
 
         MinusOne ->
-            li [] [ button [ onClick (RemoveCard deck mat card) ] [ text "-" ], text "MinusOne" ]
+            li [] [ button [ onClick (RemoveCard mat.deck mat card) ] [ text "-" ], text "MinusOne" ]
 
         Two ->
-            li [] [ button [ onClick (RemoveCard deck mat card) ] [ text "-" ], text "Two" ]
+            li [] [ button [ onClick (RemoveCard mat.deck mat card) ] [ text "-" ], text "Two" ]
 
         MinusTwo ->
-            li [] [ button [ onClick (RemoveCard deck mat card) ] [ text "-" ], text "MinusTwo" ]
+            li [] [ button [ onClick (RemoveCard mat.deck mat card) ] [ text "-" ], text "MinusTwo" ]
 
         Crit ->
-            li [] [ button [ onClick (RemoveCard deck mat card) ] [ text "-" ], text "Crit" ]
+            li [] [ button [ onClick (RemoveCard mat.deck mat card) ] [ text "-" ], text "Crit" ]
 
         Null ->
-            li [] [ button [ onClick (RemoveCard deck mat card) ] [ text "-" ], text "Null" ]
+            li [] [ button [ onClick (RemoveCard mat.deck mat card) ] [ text "-" ], text "Null" ]
 
 
 renderMat : Mat -> Html Msg
 renderMat mat =
     div []
         [ div []
+            [ button [ onClick (ToggleMatEdit mat) ] [ text "Toggle Editing" ] ]
+        , div []
             [ button [ onClick (AddCard mat Zero) ] [ text "+Zero" ]
             , button [ onClick (AddCard mat One) ] [ text "+One" ]
             , button [ onClick (AddCard mat MinusOne) ] [ text "+MinusOne" ]
@@ -293,9 +322,9 @@ renderMat mat =
             ]
         , div [] [ button [ onClick (Draw mat) ] [ text "Draw" ], button [ onClick (Reshuffle mat) ] [ text "Reshuffle" ] ]
         , div [] [ text "Deck:" ]
-        , ul [] (List.map (cardRow mat.deck mat) mat.deck.cards)
+        , ul [] (List.map (cardRow mat) mat.deck.cards)
         , div [] [ text "Drawn cards:" ]
-        , ul [] (List.map (cardRow mat.deck mat) mat.discard.cards)
+        , ul [] (List.map (cardRow mat) mat.discard.cards)
         , hr [] []
         ]
 
