@@ -122,6 +122,7 @@ type Msg
     = GenerateSeed Time.Posix
     | Reshuffle Mat
     | Draw Mat
+    | AddCard Mat CardType
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -201,6 +202,26 @@ update msg model =
                     in
                     ( { model | mats = newMats, seed = newSeed }, Cmd.none )
 
+        AddCard mat cardType ->
+            let
+                oldDeck : Pile
+                oldDeck =
+                    mat.deck
+
+                newDeck : Pile
+                newDeck =
+                    { oldDeck | cards = Card model.nonce cardType :: oldDeck.cards }
+
+                newMat : Mat
+                newMat =
+                    { mat | deck = newDeck }
+
+                newMats : List Mat
+                newMats =
+                    replace mat newMat model.mats
+            in
+            ( { model | mats = newMats, nonce = model.nonce + 1 }, Cmd.none )
+
 
 
 -- SUBSCRIPTIONS
@@ -243,7 +264,16 @@ cardRow card =
 renderMat : Mat -> Html Msg
 renderMat mat =
     div []
-        [ div [] [ button [ onClick (Draw mat) ] [ text "Draw" ], button [ onClick (Reshuffle mat) ] [ text "Reshuffle" ] ]
+        [ div []
+            [ button [ onClick (AddCard mat Zero) ] [ text "+Zero" ]
+            , button [ onClick (AddCard mat One) ] [ text "+One" ]
+            , button [ onClick (AddCard mat MinusOne) ] [ text "+MinusOne" ]
+            , button [ onClick (AddCard mat Two) ] [ text "+Two" ]
+            , button [ onClick (AddCard mat MinusTwo) ] [ text "+MinusTwo" ]
+            , button [ onClick (AddCard mat Crit) ] [ text "+Crit" ]
+            , button [ onClick (AddCard mat Null) ] [ text "+Null" ]
+            ]
+        , div [] [ button [ onClick (Draw mat) ] [ text "Draw" ], button [ onClick (Reshuffle mat) ] [ text "Reshuffle" ] ]
         , div [] [ text "Deck:" ]
         , ul [] (List.map cardRow mat.deck.cards)
         , div [] [ text "Drawn cards:" ]
