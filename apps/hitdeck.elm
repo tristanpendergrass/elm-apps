@@ -109,7 +109,6 @@ init _ =
 type Msg
     = GenerateSeed Time.Posix
     | Reshuffle Mat
-    | HandleReshuffleResult Mat (List Card)
     | Draw Mat
 
 
@@ -120,10 +119,14 @@ update msg model =
             ( { model | seed = Random.initialSeed (Time.posixToMillis time) }, Cmd.none )
 
         Reshuffle mat ->
-            ( model, Random.generate (HandleReshuffleResult mat) (shuffle (List.concat [ mat.deck.cards, mat.discard.cards ])) )
-
-        HandleReshuffleResult mat shuffledCards ->
             let
+                allCards : List Card
+                allCards =
+                    List.concat [ mat.deck.cards, mat.discard.cards ]
+
+                ( shuffledCards, newSeed ) =
+                    Random.step (shuffle allCards) model.seed
+
                 oldDeck : Pile
                 oldDeck =
                     mat.deck
