@@ -4,6 +4,7 @@ import Array exposing (Array, fromList)
 import Browser
 import Html exposing (Html, button, div, h1, hr, li, text, ul)
 import Html.Events exposing (onClick)
+import Maybe
 import Random
 import Random.List exposing (shuffle)
 import Task
@@ -157,47 +158,39 @@ update msg model =
             in
             ( { model | mats = newMats }, Cmd.none )
 
-        -- Draw mat ->
-        --     ( model
-        --     , Random.generate (HandleDrawResult mat) (Random.int 0 (List.length mat.deck.cards - 1))
-        --     )
         Draw mat ->
             let
-                ( randomIndex, newSeed ) =
-                    Random.step (Random.int 0 (List.length mat.deck.cards - 1)) model.seed
+                ( drawnCard, newSeed ) =
+                    case mat.deck.cards of
+                        first :: rest ->
+                            Random.step (Random.uniform first rest) model.seed
+                                |> Tuple.mapFirst Just
 
-                cards : List Card
-                cards =
-                    mat.deck.cards
+                        [] ->
+                            ( Nothing, model.seed )
 
-                drawnCard : Maybe Card
-                drawnCard =
-                    Array.get randomIndex (Array.fromList cards)
+                oldDiscard : Pile
+                oldDiscard =
+                    mat.discard
 
                 newDiscard : Pile
                 newDiscard =
-                    let
-                        discard : Pile
-                        discard =
-                            mat.discard
-                    in
                     case drawnCard of
                         Just card ->
-                            { discard | cards = card :: discard.cards }
+                            { oldDiscard | cards = card :: oldDiscard.cards }
 
                         Nothing ->
                             mat.discard
 
+                oldDeck : Pile
+                oldDeck =
+                    mat.deck
+
                 newDeck : Pile
                 newDeck =
-                    let
-                        deck : Pile
-                        deck =
-                            mat.deck
-                    in
                     case drawnCard of
                         Just card ->
-                            { deck | cards = List.filter ((/=) card) cards }
+                            { oldDeck | cards = List.filter ((/=) card) oldDeck.cards }
 
                         Nothing ->
                             mat.deck
