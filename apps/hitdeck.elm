@@ -6,6 +6,8 @@ import Html exposing (Html, button, div, h1, hr, li, text, ul)
 import Html.Events exposing (onClick)
 import Random
 import Random.List exposing (shuffle)
+import Task
+import Time
 
 
 main =
@@ -45,6 +47,7 @@ type alias Mat =
 type alias Model =
     { mats : List Mat
     , nonce : Int -- Number to be used and then incremented when assigning new ids
+    , seed : Random.Seed
     }
 
 
@@ -88,12 +91,13 @@ defaultMatTwo =
     }
 
 
-init : () -> ( Model, Cmd none )
+init : () -> ( Model, Cmd Msg )
 init _ =
     ( { mats = [ defaultMat, defaultMatTwo ]
       , nonce = 41
+      , seed = Random.initialSeed 0
       }
-    , Cmd.none
+    , Task.perform GenerateSeed Time.now
     )
 
 
@@ -102,7 +106,8 @@ init _ =
 
 
 type Msg
-    = Reshuffle Mat
+    = GenerateSeed Time.Posix
+    | Reshuffle Mat
     | HandleReshuffleResult Mat (List Card)
     | Draw Mat
     | HandleDrawResult Mat Int
@@ -111,6 +116,9 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        GenerateSeed time ->
+            ( { model | seed = Random.initialSeed (Time.posixToMillis time) }, Cmd.none )
+
         Reshuffle mat ->
             ( model, Random.generate (HandleReshuffleResult mat) (shuffle (List.concat [ mat.deck.cards, mat.discard.cards ])) )
 
