@@ -110,7 +110,6 @@ type Msg
     | Reshuffle Mat
     | HandleReshuffleResult Mat (List Card)
     | Draw Mat
-    | HandleDrawResult Mat Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -158,20 +157,22 @@ update msg model =
             in
             ( { model | mats = newMats }, Cmd.none )
 
+        -- Draw mat ->
+        --     ( model
+        --     , Random.generate (HandleDrawResult mat) (Random.int 0 (List.length mat.deck.cards - 1))
+        --     )
         Draw mat ->
-            ( model
-            , Random.generate (HandleDrawResult mat) (Random.int 0 (List.length mat.deck.cards - 1))
-            )
-
-        HandleDrawResult mat result ->
             let
+                ( randomIndex, newSeed ) =
+                    Random.step (Random.int 0 (List.length mat.deck.cards - 1)) model.seed
+
                 cards : List Card
                 cards =
                     mat.deck.cards
 
                 drawnCard : Maybe Card
                 drawnCard =
-                    Array.get result (Array.fromList cards)
+                    Array.get randomIndex (Array.fromList cards)
 
                 newDiscard : Pile
                 newDiscard =
@@ -217,7 +218,7 @@ update msg model =
                         )
                         model.mats
             in
-            ( { model | mats = newMats }, Cmd.none )
+            ( { model | mats = newMats, seed = newSeed }, Cmd.none )
 
 
 
