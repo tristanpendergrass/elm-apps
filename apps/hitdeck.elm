@@ -15,6 +15,18 @@ main =
     Browser.element { init = init, update = update, view = view, subscriptions = subscriptions }
 
 
+replace : a -> a -> List a -> List a
+replace oldA newA =
+    List.map
+        (\ax ->
+            if ax == oldA then
+                newA
+
+            else
+                ax
+        )
+
+
 
 -- MODEL
 
@@ -149,15 +161,7 @@ update msg model =
 
                 newMats : List Mat
                 newMats =
-                    List.map
-                        (\m ->
-                            if m == mat then
-                                newMat
-
-                            else
-                                m
-                        )
-                        model.mats
+                    replace mat newMat model.mats
             in
             ( { model | mats = newMats }, Cmd.none )
 
@@ -193,15 +197,7 @@ update msg model =
 
                         newMats : List Mat
                         newMats =
-                            List.map
-                                (\l ->
-                                    if l == mat then
-                                        newMat
-
-                                    else
-                                        l
-                                )
-                                model.mats
+                            replace mat newMat model.mats
                     in
                     ( { model | mats = newMats, seed = newSeed }, Cmd.none )
 
