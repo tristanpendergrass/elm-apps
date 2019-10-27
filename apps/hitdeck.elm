@@ -4,6 +4,7 @@ import Array exposing (Array, fromList)
 import Browser
 import Html exposing (Html, button, div, h1, hr, li, text, ul)
 import Html.Events exposing (onClick)
+import List.Extra
 import Maybe
 import Random
 import Random.List exposing (shuffle)
@@ -123,6 +124,7 @@ type Msg
     | Reshuffle Mat
     | Draw Mat
     | AddCard Mat CardType
+    | RemoveCard Pile Mat Card
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -222,6 +224,22 @@ update msg model =
             in
             ( { model | mats = newMats, nonce = model.nonce + 1 }, Cmd.none )
 
+        RemoveCard deck mat card ->
+            let
+                newDeck : Pile
+                newDeck =
+                    { deck | cards = List.Extra.remove card deck.cards }
+
+                newMat : Mat
+                newMat =
+                    { mat | deck = newDeck }
+
+                newMats : List Mat
+                newMats =
+                    replace mat newMat model.mats
+            in
+            ( { model | mats = newMats }, Cmd.none )
+
 
 
 -- SUBSCRIPTIONS
@@ -236,29 +254,29 @@ subscriptions _ =
 -- VIEW
 
 
-cardRow : Card -> Html Msg
-cardRow card =
+cardRow : Pile -> Mat -> Card -> Html Msg
+cardRow deck mat card =
     case card.cardType of
         Zero ->
-            li [] [ text "Zero" ]
+            li [] [ button [ onClick (RemoveCard deck mat card) ] [ text "-" ], text "Zero" ]
 
         One ->
-            li [] [ text "One" ]
+            li [] [ button [ onClick (RemoveCard deck mat card) ] [ text "-" ], text "One" ]
 
         MinusOne ->
-            li [] [ text "MinusOne" ]
+            li [] [ button [ onClick (RemoveCard deck mat card) ] [ text "-" ], text "MinusOne" ]
 
         Two ->
-            li [] [ text "Two" ]
+            li [] [ button [ onClick (RemoveCard deck mat card) ] [ text "-" ], text "Two" ]
 
         MinusTwo ->
-            li [] [ text "MinusTwo" ]
+            li [] [ button [ onClick (RemoveCard deck mat card) ] [ text "-" ], text "MinusTwo" ]
 
         Crit ->
-            li [] [ text "Crit" ]
+            li [] [ button [ onClick (RemoveCard deck mat card) ] [ text "-" ], text "Crit" ]
 
         Null ->
-            li [] [ text "Null" ]
+            li [] [ button [ onClick (RemoveCard deck mat card) ] [ text "-" ], text "Null" ]
 
 
 renderMat : Mat -> Html Msg
@@ -275,9 +293,9 @@ renderMat mat =
             ]
         , div [] [ button [ onClick (Draw mat) ] [ text "Draw" ], button [ onClick (Reshuffle mat) ] [ text "Reshuffle" ] ]
         , div [] [ text "Deck:" ]
-        , ul [] (List.map cardRow mat.deck.cards)
+        , ul [] (List.map (cardRow mat.deck mat) mat.deck.cards)
         , div [] [ text "Drawn cards:" ]
-        , ul [] (List.map cardRow mat.discard.cards)
+        , ul [] (List.map (cardRow mat.deck mat) mat.discard.cards)
         , hr [] []
         ]
 
