@@ -91,30 +91,9 @@ defaultMat =
     }
 
 
-defaultMatTwo : Mat
-defaultMatTwo =
-    { id = 3
-    , deck =
-        { id = 30
-        , cards =
-            [ { id = 31, cardType = Zero }
-            , { id = 32, cardType = One }
-            , { id = 33, cardType = MinusOne }
-            , { id = 34, cardType = Two }
-            , { id = 35, cardType = MinusTwo }
-            , { id = 36, cardType = Crit }
-            , { id = 37, cardType = Null }
-            , { id = 38, cardType = Zero }
-            ]
-        }
-    , discard = { id = 40, cards = [] }
-    , editState = Default
-    }
-
-
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { mats = [ defaultMat, defaultMatTwo ]
+    ( { mats = [ defaultMat ]
       , nonce = 41
       , seed = Random.initialSeed 0
       }
@@ -133,6 +112,7 @@ type Msg
     | AddCard Mat CardType
     | RemoveCard Pile Mat Card
     | ToggleMatEdit Mat
+    | AddMat
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -267,6 +247,18 @@ update msg model =
             in
             ( { model | mats = newMats }, Cmd.none )
 
+        AddMat ->
+            let
+                newMat : Mat
+                newMat =
+                    { id = model.nonce
+                    , deck = { id = model.nonce + 1, cards = [] }
+                    , discard = { id = model.nonce + 2, cards = [] }
+                    , editState = Default
+                    }
+            in
+            ( { model | mats = newMat :: model.mats, nonce = model.nonce + 3 }, Cmd.none )
+
 
 
 -- SUBSCRIPTIONS
@@ -332,4 +324,8 @@ renderMat mat =
 view : Model -> Html Msg
 view model =
     div []
-        (List.map renderMat model.mats)
+        [ button [ onClick AddMat ] [ text "Add Mat" ]
+        , hr [] []
+        , div []
+            (List.map renderMat model.mats)
+        ]
