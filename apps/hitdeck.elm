@@ -298,19 +298,49 @@ cardRow mat card =
             li [] [ button [ onClick (RemoveCard mat.deck mat card) ] [ text "-" ], text "Null" ]
 
 
+renderAddCard : Mat -> CardType -> Html Msg
+renderAddCard mat cardType =
+    let
+        label : String
+        label =
+            case cardType of
+                Zero ->
+                    "+Zero"
+
+                One ->
+                    "+One"
+
+                MinusOne ->
+                    "+MinusOne"
+
+                Two ->
+                    "+Two"
+
+                MinusTwo ->
+                    "+MinusTwo"
+
+                Crit ->
+                    "+Crit"
+
+                Null ->
+                    "+Null"
+    in
+    button [ onClick (AddCard mat cardType) ] [ text label ]
+
+
 renderMat : Mat -> Html Msg
 renderMat mat =
     div []
         [ div []
             [ button [ onClick (ToggleMatEdit mat) ] [ text "Toggle Editing" ] ]
         , div []
-            [ button [ onClick (AddCard mat Zero) ] [ text "+Zero" ]
-            , button [ onClick (AddCard mat One) ] [ text "+One" ]
-            , button [ onClick (AddCard mat MinusOne) ] [ text "+MinusOne" ]
-            , button [ onClick (AddCard mat Two) ] [ text "+Two" ]
-            , button [ onClick (AddCard mat MinusTwo) ] [ text "+MinusTwo" ]
-            , button [ onClick (AddCard mat Crit) ] [ text "+Crit" ]
-            , button [ onClick (AddCard mat Null) ] [ text "+Null" ]
+            [ renderAddCard mat Zero
+            , renderAddCard mat One
+            , renderAddCard mat MinusOne
+            , renderAddCard mat Two
+            , renderAddCard mat MinusTwo
+            , renderAddCard mat Crit
+            , renderAddCard mat Null
             ]
         , div [] [ button [ onClick (Draw mat) ] [ text "Draw" ], button [ onClick (Reshuffle mat) ] [ text "Reshuffle" ] ]
         , div [] [ text "Deck:" ]
